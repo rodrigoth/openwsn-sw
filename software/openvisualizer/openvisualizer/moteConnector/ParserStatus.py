@@ -14,6 +14,8 @@ import struct
 from ParserException import ParserException
 import Parser
 import openvisualizer.openvisualizer_utils as u
+from openvisualizer.openType import  typeAddr,typeAsn
+import psycopg2
 
 class FieldParsingKey(object):
 
@@ -187,7 +189,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     9,
                                     'NeighborsRow',
-                                    '<BBBBBBQQHbBBBBBHHBB',
+                                    '<BBBBBBQQHbBBBBBHHBBB',
                                     [
                                         'row',                       # B
                                         'used',                      # B
@@ -208,6 +210,7 @@ class ParserStatus(Parser.Parser):
                                         'asn_0_1',                   # H
                                         'joinPrio',                  # B
                                         'f6PNORES',                   # B
+                                        'totalEBReceived',
                                     ],
                                 )
         self._addFieldsParser   (   
@@ -217,6 +220,34 @@ class ParserStatus(Parser.Parser):
                                     '<H',
                                     [
                                         'kaPeriod',                  # H
+                                    ],
+                                )
+        self._addFieldsParser   (
+                                    3,
+                                    12,
+                                    'EB',
+                                    '<BBBBBBQQHbBBBBBHHBBB',
+                                    [
+                                        'row',                       # B
+                                        'used',                      # B
+                                        'parentPreference',          # B
+                                        'stableNeighbor',            # B
+                                        'switchStabilityCounter',    # B
+                                        'addr_type',                 # B
+                                        'addr_bodyH',                # Q
+                                        'addr_bodyL',                # Q
+                                        'DAGrank',                   # H
+                                        'rssi',                      # b
+                                        'numRx',                     # B
+                                        'numTx',                     # B
+                                        'numTxACK',                  # B
+                                        'numWraps',                  # B
+                                        'asn_4',                     # B
+                                        'asn_2_3',                   # H
+                                        'asn_0_1',                   # H
+                                        'joinPrio',                  # B
+                                        'f6PNORES',                  # B
+                                        'totalEBReceived',
                                     ],
                                 )
     
@@ -270,6 +301,47 @@ class ParserStatus(Parser.Parser):
                 
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
+
+                if statusElem == 12:
+                    print "CHEGOUUUU" 
+                    if returnTuple[19] != 0: 
+                        node =  str(hex(moteId))[4:6] + str(hex(moteId))[2:4]
+                        if node in ['b386']:
+                            sender = typeAddr.typeAddr()
+                            sender.update(2,returnTuple[6],returnTuple[7])
+                            asn = typeAsn.typeAsn()
+                            asn.update(returnTuple[16],returnTuple[15],returnTuple[14])
+                            print returnTuple
+                            tx  = returnTuple[11]
+                            ack = returnTuple[12]
+                            
+                            #if tx == 0:
+                            #    pdr = 0
+                            #else:
+                            #    pdr = 100 * (float (ack)/tx)
+                            count_1 = returnTuple[19]
+                            try:
+                                conn = psycopg2.connect(database='experiment', user='postgres', password='142500', host='127.0.0.1', port='5432')   
+
+                                sender2 = '0'
+                                count_2 = 0
+
+                                sender3 = '0'
+                                count_3 = 0
+
+                            
+                                cur = conn.cursor()
+                                cur.execute("insert into experiment3 (asn,node,tx,ack,sender_1,count_1, \
+                                sender_2,count_2,sender_3,count_3) \
+                                values ('" + str(asn) + "','" + str(node) + "'," + str(tx) + "," + str(ack)  + ",'" + str(sender) + "'," + str(count_1) + ",'" + sender2 + "'," +
+                                str(count_2) + ",'" + sender3 + "'," + str(count_3) +")")
+                
+                                conn.commit()
+                                conn.close()
+                            except Exception as err:
+                                print str(err)
+                                pass     
+
                 
                 # log
                 if log.isEnabledFor(logging.DEBUG):
