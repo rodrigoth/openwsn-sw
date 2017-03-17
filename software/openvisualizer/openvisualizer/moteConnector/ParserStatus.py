@@ -16,6 +16,7 @@ import Parser
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.openType import  typeAddr,typeAsn
 import psycopg2
+from datetime import datetime
 
 class FieldParsingKey(object):
 
@@ -29,7 +30,10 @@ class FieldParsingKey(object):
 class ParserStatus(Parser.Parser):
     
     HEADER_LENGTH       = 4
-    
+    last_time = datetime.now()
+    nodes = {}
+
+
     def __init__(self):
         
         # log
@@ -246,10 +250,11 @@ class ParserStatus(Parser.Parser):
                                         'asn_2_3',                   # H
                                         'asn_0_1',                   # H
                                         'joinPrio',                  # B
-                                        'f6PNORES',                  # B
+                                        'f6PNORES',                   # B
                                         'totalEBReceived',
                                     ],
                                 )
+       
     
     #======================== public ==========================================
     
@@ -302,11 +307,14 @@ class ParserStatus(Parser.Parser):
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
 
-                if statusElem == 12:
-                    print "CHEGOUUUU" 
-                    if returnTuple[19] != 0: 
+                if statusElem == 12:                        
                         node =  str(hex(moteId))[4:6] + str(hex(moteId))[2:4]
-                        if node in ['b386']:
+                        if node in ['b068']:
+                            current_time = datetime.now()
+
+                            if (((current_time - self.last_time).total_seconds()/60.0) > 1):
+                                self.nodes = {}
+
                             sender = typeAddr.typeAddr()
                             sender.update(2,returnTuple[6],returnTuple[7])
                             asn = typeAsn.typeAsn()
@@ -315,33 +323,33 @@ class ParserStatus(Parser.Parser):
                             tx  = returnTuple[11]
                             ack = returnTuple[12]
                             
-                            #if tx == 0:
-                            #    pdr = 0
-                            #else:
-                            #    pdr = 100 * (float (ack)/tx)
-                            count_1 = returnTuple[19]
-                            try:
-                                conn = psycopg2.connect(database='experiment', user='postgres', password='142500', host='127.0.0.1', port='5432')   
+                            eb = returnTuple[19]
 
-                                sender2 = '0'
-                                count_2 = 0
+                            self.nodes[str(sender)] = [tx,ack,eb]
+                            expected_number_of_nodes = 3
 
-                                sender3 = '0'
-                                count_3 = 0
+                            if (len(self.nodes) == expected_number_of_nodes):
+                                try:
+                                    conn = psycopg2.connect(database='experiment', user='postgres', password='rodrigo', host='127.0.0.1', port='5432')   
+                                    cur = conn.cursor()
+                    				#cur.execute("SELECT max(experiment_id)  from experiments")
+                    				#experiment_id = cur.fetchone()[0]
+                    				#if (experiment_id == '' or experiment_id == None):
+                    				#    experiment_id = 1
+                    				#else:
+                    				#    experiment_id = experiment_id + 1
+                                    experiment_id = 1
 
-                            
-                                cur = conn.cursor()
-                                cur.execute("insert into experiment3 (asn,node,tx,ack,sender_1,count_1, \
-                                sender_2,count_2,sender_3,count_3) \
-                                values ('" + str(asn) + "','" + str(node) + "'," + str(tx) + "," + str(ack)  + ",'" + str(sender) + "'," + str(count_1) + ",'" + sender2 + "'," +
-                                str(count_2) + ",'" + sender3 + "'," + str(count_3) +")")
-                
-                                conn.commit()
-                                conn.close()
-                            except Exception as err:
-                                print str(err)
-                                pass     
-
+                                    for key,value in self.nodes.iteritems():
+                                        cur.execute("insert into experiments (asn,node,tx,ack,sender,eb,experiment_id) \
+                                        values ('" + str(asn) + "','" + str(node) + "'," + str(value[0]) + "," + str(value[1])  + ",'" + str(key) + "'," + str(value[2]) + "," + str(experiment_id) + ")")
+                                        conn.commit()
+                                    
+                                    conn.close()
+                                except Exception as err:
+                                    print str(err)
+                                    pass     
+                        self.last_time = datetime.now()
                 
                 # log
                 if log.isEnabledFor(logging.DEBUG):
