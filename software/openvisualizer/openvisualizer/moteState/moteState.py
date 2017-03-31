@@ -266,6 +266,75 @@ class StateIsSync(StateElem):
             self.data.append({})
         self.data[0]['isSync']              = notif.isSync
 
+
+class StateEb(StateElem):
+    
+    def update(self,notif):
+        StateElem.update(self)
+        if len(self.data)==0:
+            self.data.append({})
+        if 'addr' not in self.data[0]:
+            self.data[0]['addr']                 = typeAddr.typeAddr()
+        self.data[0]['addr'].update(notif.addr_type,
+                                    notif.addr_bodyH,
+                                    notif.addr_bodyL)
+        if 'asn' not in self.data[0]:
+            self.data[0]['asn']                  = typeAsn.typeAsn()
+        self.data[0]['asn'].update(notif.asn_0_1,
+                                   notif.asn_2_3,
+                                   notif.asn_4)
+        self.data[0]['eb_channel_11']=notif.eb_channel_11
+        self.data[0]['eb_channel_12']=notif.eb_channel_12
+        self.data[0]['eb_channel_13']=notif.eb_channel_13
+        self.data[0]['eb_channel_14']=notif.eb_channel_14
+        self.data[0]['eb_channel_15']=notif.eb_channel_15
+        self.data[0]['eb_channel_16']=notif.eb_channel_16
+        self.data[0]['eb_channel_17']=notif.eb_channel_17
+        self.data[0]['eb_channel_18']=notif.eb_channel_18
+        self.data[0]['eb_channel_19']=notif.eb_channel_19
+        self.data[0]['eb_channel_20']=notif.eb_channel_20
+        self.data[0]['eb_channel_21']=notif.eb_channel_21
+        self.data[0]['eb_channel_22']=notif.eb_channel_22
+        self.data[0]['eb_channel_23']=notif.eb_channel_23
+        self.data[0]['eb_channel_24']=notif.eb_channel_24
+        self.data[0]['eb_channel_25']=notif.eb_channel_25
+        self.data[0]['eb_channel_26']=notif.eb_channel_26
+
+        self.data[0]['ack_channel_11']=notif.ack_channel_11
+        self.data[0]['ack_channel_12']=notif.ack_channel_12
+        self.data[0]['ack_channel_13']=notif.ack_channel_13
+        self.data[0]['ack_channel_14']=notif.ack_channel_14
+        self.data[0]['ack_channel_15']=notif.ack_channel_15
+        self.data[0]['ack_channel_16']=notif.ack_channel_16
+        self.data[0]['ack_channel_17']=notif.ack_channel_17
+        self.data[0]['ack_channel_18']=notif.ack_channel_18
+        self.data[0]['ack_channel_19']=notif.ack_channel_19
+        self.data[0]['ack_channel_20']=notif.ack_channel_20
+        self.data[0]['ack_channel_21']=notif.ack_channel_21
+        self.data[0]['ack_channel_22']=notif.ack_channel_22
+        self.data[0]['ack_channel_23']=notif.ack_channel_23
+        self.data[0]['ack_channel_24']=notif.ack_channel_24
+        self.data[0]['ack_channel_25']=notif.ack_channel_25
+        self.data[0]['ack_channel_26']=notif.ack_channel_26
+
+        self.data[0]['tx_channel_11']=notif.tx_channel_11
+        self.data[0]['tx_channel_12']=notif.tx_channel_12
+        self.data[0]['tx_channel_13']=notif.tx_channel_13
+        self.data[0]['tx_channel_14']=notif.tx_channel_14
+        self.data[0]['tx_channel_15']=notif.tx_channel_15
+        self.data[0]['tx_channel_16']=notif.tx_channel_16
+        self.data[0]['tx_channel_17']=notif.tx_channel_17
+        self.data[0]['tx_channel_18']=notif.tx_channel_18
+        self.data[0]['tx_channel_19']=notif.tx_channel_19
+        self.data[0]['tx_channel_20']=notif.tx_channel_20
+        self.data[0]['tx_channel_21']=notif.tx_channel_21
+        self.data[0]['tx_channel_22']=notif.tx_channel_22
+        self.data[0]['tx_channel_23']=notif.tx_channel_23
+        self.data[0]['tx_channel_24']=notif.tx_channel_24
+        self.data[0]['tx_channel_25']=notif.tx_channel_25
+        self.data[0]['tx_channel_26']=notif.tx_channel_26
+
+
 class StateIdManager(StateElem):
     
     def __init__(self,eventBusClient,moteConnector):
@@ -396,6 +465,7 @@ class moteState(eventBusClient.eventBusClient):
     ST_IDMANAGER        = 'IdManager'
     ST_MYDAGRANK        = 'MyDagRank'
     ST_KAPERIOD         = 'kaPeriod'
+    ST_EB               = 'EB'
     ST_ALL              = [
         ST_OUPUTBUFFER,
         ST_ASN,
@@ -408,6 +478,7 @@ class moteState(eventBusClient.eventBusClient):
         ST_IDMANAGER, 
         ST_MYDAGRANK,
         ST_KAPERIOD,
+        ST_EB
     ]
     
     TRIGGER_DAGROOT     = 'DAGroot'
@@ -519,6 +590,7 @@ class moteState(eventBusClient.eventBusClient):
                                               )
         self.state[self.ST_MYDAGRANK]       = StateMyDagRank()
         self.state[self.ST_KAPERIOD]        = StatekaPeriod()
+        self.state[self.ST_EB]              = StateEb()
         
         self.notifHandlers = {
             self.parserStatus.named_tuple[self.ST_OUPUTBUFFER]:
@@ -543,6 +615,9 @@ class moteState(eventBusClient.eventBusClient):
                 self.state[self.ST_MYDAGRANK].update,
             self.parserStatus.named_tuple[self.ST_KAPERIOD]:
                 self.state[self.ST_KAPERIOD].update,
+            self.parserStatus.named_tuple[self.ST_EB]:
+                self.state[self.ST_EB].update,
+
         }
         
         # initialize parent class

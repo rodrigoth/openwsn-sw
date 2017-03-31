@@ -35,6 +35,7 @@ class ParserStatus(Parser.Parser):
 
 
     def __init__(self):
+        self.last_time = datetime.now()
         
         # log
         log.info("create instance")
@@ -230,28 +231,62 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     12,
                                     'EB',
-                                    '<BBBBBBQQHbBBBBBHHBBB',
+                                    '<BQQBHH48B',
                                     [
-                                        'row',                       # B
-                                        'used',                      # B
-                                        'parentPreference',          # B
-                                        'stableNeighbor',            # B
-                                        'switchStabilityCounter',    # B
                                         'addr_type',                 # B
                                         'addr_bodyH',                # Q
                                         'addr_bodyL',                # Q
-                                        'DAGrank',                   # H
-                                        'rssi',                      # b
-                                        'numRx',                     # B
-                                        'numTx',                     # B
-                                        'numTxACK',                  # B
-                                        'numWraps',                  # B
                                         'asn_4',                     # B
                                         'asn_2_3',                   # H
                                         'asn_0_1',                   # H
-                                        'joinPrio',                  # B
-                                        'f6PNORES',                   # B
-                                        'totalEBReceived',
+                                        'eb_channel_11',            # B
+                                        'eb_channel_12',            # B
+                                        'eb_channel_13',            # B
+                                        'eb_channel_14',            # B
+                                        'eb_channel_15',            # B
+                                        'eb_channel_16',            # B
+                                        'eb_channel_17',            # B
+                                        'eb_channel_18',            # B
+                                        'eb_channel_19',            # B
+                                        'eb_channel_20',            # B
+                                        'eb_channel_21',            # B
+                                        'eb_channel_22',            # B
+                                        'eb_channel_23',            # B
+                                        'eb_channel_24',            # B
+                                        'eb_channel_25',            # B
+                                        'eb_channel_26',            # B
+                                        'ack_channel_11',           # B
+                                        'ack_channel_12',           # B
+                                        'ack_channel_13',           # B
+                                        'ack_channel_14',           # B
+                                        'ack_channel_15',           # B
+                                        'ack_channel_16',           # B
+                                        'ack_channel_17',           # B
+                                        'ack_channel_18',           # B
+                                        'ack_channel_19',           # B
+                                        'ack_channel_20',           # B
+                                        'ack_channel_21',           # B
+                                        'ack_channel_22',           # B
+                                        'ack_channel_23',           # B
+                                        'ack_channel_24',           # B
+                                        'ack_channel_25',           # B
+                                        'ack_channel_26',           # B
+                                        'tx_channel_11',            # B
+                                        'tx_channel_12',            # B
+                                        'tx_channel_13',            # B
+                                        'tx_channel_14',            # B
+                                        'tx_channel_15',            # B
+                                        'tx_channel_16',            # B
+                                        'tx_channel_17',            # B
+                                        'tx_channel_18',            # B
+                                        'tx_channel_19',            # B
+                                        'tx_channel_20',            # B
+                                        'tx_channel_21',            # B
+                                        'tx_channel_22',            # B
+                                        'tx_channel_23',            # B
+                                        'tx_channel_24',            # B
+                                        'tx_channel_25',            # B
+                                        'tx_channel_26',            # B 
                                     ],
                                 )
        
@@ -266,7 +301,11 @@ class ParserStatus(Parser.Parser):
         
         # ensure input not short longer than header
         self._checkLength(input)
-        
+        x = False
+        if input[2] == 12:
+            print input
+            print len(input)
+            x = True
         headerBytes = input[:3]
         
         # extract moteId and statusElem
@@ -292,7 +331,8 @@ class ParserStatus(Parser.Parser):
                 
                 # parse byte array
                 try:
-                    fields = struct.unpack(key.structure,''.join([chr(c) for c in input]))                     
+                    fields = struct.unpack(key.structure,''.join([chr(c) for c in input]))   
+                               
                 except struct.error as err:
                     raise ParserException(
                             ParserException.DESERIALIZE,
@@ -306,14 +346,16 @@ class ParserStatus(Parser.Parser):
                 
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
-
+                if x:
+                    print returnTuple
                 if statusElem == 12:                        
                         node =  str(hex(moteId))[4:6] + str(hex(moteId))[2:4]
-                        if node in ['b068']:
+                        if node in ['9788']:
                             current_time = datetime.now()
 
-                            if (((current_time - self.last_time).total_seconds()/60.0) > 1):
-                                self.nodes = {}
+                            if (((current_time - self.last_time).total_seconds()/60.0) > 2):
+                                 self.asn = typeAsn.typeAsn()
+                                 self.asn.update(returnTuple[16],returnTuple[15],returnTuple[14])
 
                             sender = typeAddr.typeAddr()
                             sender.update(2,returnTuple[6],returnTuple[7])
@@ -325,30 +367,30 @@ class ParserStatus(Parser.Parser):
                             
                             eb = returnTuple[19]
 
-                            self.nodes[str(sender)] = [tx,ack,eb]
-                            expected_number_of_nodes = 3
+                            #nodes[str(sender)] = [tx,ack,eb]
+                            #expected_number_of_nodes = 9
 
-                            if (len(self.nodes) == expected_number_of_nodes):
-                                try:
-                                    conn = psycopg2.connect(database='experiment', user='postgres', password='rodrigo', host='127.0.0.1', port='5432')   
-                                    cur = conn.cursor()
-                    				#cur.execute("SELECT max(experiment_id)  from experiments")
-                    				#experiment_id = cur.fetchone()[0]
-                    				#if (experiment_id == '' or experiment_id == None):
-                    				#    experiment_id = 1
-                    				#else:
-                    				#    experiment_id = experiment_id + 1
-                                    experiment_id = 1
+                            #if (len(self.nodes) == expected_number_of_nodes):
+                            try:
+                                conn = psycopg2.connect(database='experiment', user='postgres', password='rodrigo', host='127.0.0.1', port='5432')   
+                                cur = conn.cursor()
+                				#cur.execute("SELECT max(experiment_id)  from experiments")
+                				#experiment_id = cur.fetchone()[0]
+                				#if (experiment_id == '' or experiment_id == None):
+                				#    experiment_id = 1
+                				#else:
+                				#    experiment_id = experiment_id + 1
+                                experiment_id = 7
 
-                                    for key,value in self.nodes.iteritems():
-                                        cur.execute("insert into experiments (asn,node,tx,ack,sender,eb,experiment_id) \
-                                        values ('" + str(asn) + "','" + str(node) + "'," + str(value[0]) + "," + str(value[1])  + ",'" + str(key) + "'," + str(value[2]) + "," + str(experiment_id) + ")")
-                                        conn.commit()
-                                    
-                                    conn.close()
-                                except Exception as err:
-                                    print str(err)
-                                    pass     
+                                #for key,value in self.nodes.iteritems():
+                                cur.execute("insert into experiments (asn,node,tx,ack,sender,eb,experiment_id) \
+                                values ('" + str(asn) + "','" + str(node) + "'," + str(tx) + "," + str(ack)  + ",'" + str(sender) + "'," + str(eb) + "," + str(experiment_id) + ")")
+                                conn.commit()
+                                
+                                conn.close()
+                            except Exception as err:
+                                print str(err)
+                                pass     
                         self.last_time = datetime.now()
                 
                 # log
