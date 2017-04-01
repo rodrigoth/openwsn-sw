@@ -301,11 +301,6 @@ class ParserStatus(Parser.Parser):
         
         # ensure input not short longer than header
         self._checkLength(input)
-        x = False
-        if input[2] == 12:
-            print input
-            print len(input)
-            x = True
         headerBytes = input[:3]
         
         # extract moteId and statusElem
@@ -346,33 +341,77 @@ class ParserStatus(Parser.Parser):
                 
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
-                if x:
-                    print returnTuple
                 if statusElem == 12:                        
+                        print returnTuple
                         node =  str(hex(moteId))[4:6] + str(hex(moteId))[2:4]
                         if node in ['9788']:
                             current_time = datetime.now()
 
                             if (((current_time - self.last_time).total_seconds()/60.0) > 2):
                                  self.asn = typeAsn.typeAsn()
-                                 self.asn.update(returnTuple[16],returnTuple[15],returnTuple[14])
+                                 self.asn.update(returnTuple[5],returnTuple[4],returnTuple[3])
 
                             sender = typeAddr.typeAddr()
-                            sender.update(2,returnTuple[6],returnTuple[7])
-                            asn = typeAsn.typeAsn()
-                            asn.update(returnTuple[16],returnTuple[15],returnTuple[14])
-                            print returnTuple
-                            tx  = returnTuple[11]
-                            ack = returnTuple[12]
+                            sender.update(2,returnTuple[1],returnTuple[2])
+                          
                             
-                            eb = returnTuple[19]
+                            eb_11 = returnTuple[6]
+                            eb_12 = returnTuple[7]
+                            eb_13 = returnTuple[8]
+                            eb_14 = returnTuple[9]
+                            eb_15 = returnTuple[10]
+                            eb_16 = returnTuple[11]
+                            eb_17 = returnTuple[12]
+                            eb_18 = returnTuple[13]
+                            eb_19 = returnTuple[14]
+                            eb_20 = returnTuple[15]
+                            eb_21 = returnTuple[16]
+                            eb_22 = returnTuple[17]
+                            eb_23 = returnTuple[18]
+                            eb_24 = returnTuple[19]
+                            eb_25 = returnTuple[20]
+                            eb_26 = returnTuple[21]
+                            
+                            ack_11 = returnTuple[22]
+                            ack_12 = returnTuple[23]
+                            ack_13 = returnTuple[24]
+                            ack_14 = returnTuple[25]
+                            ack_15 = returnTuple[26]
+                            ack_16 = returnTuple[27]
+                            ack_17 = returnTuple[28]
+                            ack_18 = returnTuple[29]
+                            ack_19 = returnTuple[30]
+                            ack_20 = returnTuple[31]
+                            ack_21 = returnTuple[32]
+                            ack_22 = returnTuple[33]
+                            ack_23 = returnTuple[34]
+                            ack_24 = returnTuple[35]
+                            ack_25 = returnTuple[36]
+                            ack_26 = returnTuple[37]
+
+                            tx_11 = returnTuple[38]
+                            tx_12 = returnTuple[39]
+                            tx_13 = returnTuple[40]
+                            tx_14 = returnTuple[41]
+                            tx_15 = returnTuple[42]
+                            tx_16 = returnTuple[43]
+                            tx_17 = returnTuple[44]
+                            tx_18 = returnTuple[45]
+                            tx_19 = returnTuple[46]
+                            tx_20 = returnTuple[47]
+                            tx_21 = returnTuple[48]
+                            tx_22 = returnTuple[49]
+                            tx_23 = returnTuple[50]
+                            tx_24 = returnTuple[51]
+                            tx_25 = returnTuple[52]
+                            tx_26 = returnTuple[53]
 
                             #nodes[str(sender)] = [tx,ack,eb]
                             #expected_number_of_nodes = 9
 
                             #if (len(self.nodes) == expected_number_of_nodes):
                             try:
-                                conn = psycopg2.connect(database='experiment', user='postgres', password='rodrigo', host='127.0.0.1', port='5432')   
+                                conn = psycopg2.connect(database='ExperimentMultiChannel', user='postgres', password='rodrigo', host='2001:660:4701:1001:fd37:8a69:16e6:7525', port='5432')   
                                 cur = conn.cursor()
                 				#cur.execute("SELECT max(experiment_id)  from experiments")
                 				#experiment_id = cur.fetchone()[0]
@@ -380,13 +419,21 @@ class ParserStatus(Parser.Parser):
                 				#    experiment_id = 1
                 				#else:
                 				#    experiment_id = experiment_id + 1
-                                experiment_id = 7
+                                experiment_id = 1
 
                                 #for key,value in self.nodes.iteritems():
-                                cur.execute("insert into experiments (asn,node,tx,ack,sender,eb,experiment_id) \
-                                values ('" + str(asn) + "','" + str(node) + "'," + str(tx) + "," + str(ack)  + ",'" + str(sender) + "'," + str(eb) + "," + str(experiment_id) + ")")
+                                sql = "insert into experiments (asn,node,sender,experiment_id,\
+                                eb_11,eb_12,eb_13,eb_14,eb_15,eb_16,eb_17,eb_18,eb_19,eb_20,eb_21,eb_22,eb_23,eb_24,eb_25,eb_26,\
+                                ack_11,ack_12,ack_13,ack_14,ack_15,ack_16,ack_17,ack_18,ack_19,ack_20,ack_21,ack_22,ack_23,ack_24,ack_25,ack_26,\
+                                tx_11,tx_12,tx_13,tx_14,tx_15,tx_16,tx_17,tx_18,tx_19,tx_20,tx_21,tx_22,tx_23,tx_24,tx_25,tx_26)\
+                                values({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},\
+                                {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{})".format("'" + str(self.asn) + "'",
+                                "'" + str(node) + "'" ,"'" + str(sender)+ "'",str(experiment_id),eb_11,eb_12,eb_13,eb_14,eb_15,eb_16,eb_17,eb_18,eb_19,
+                                eb_20,eb_21,eb_22,eb_23,eb_24,eb_25,eb_26,ack_11,ack_12,ack_13,ack_14,ack_15,ack_16,ack_17,ack_18,ack_19,
+                                ack_20,ack_21,ack_22,ack_23,ack_24,ack_25,ack_26,tx_11,tx_12,tx_13,tx_14,tx_15,tx_16,tx_17,tx_18,tx_19,
+                                tx_20,tx_21,tx_22,tx_23,tx_24,tx_25,tx_26) 
+                                cur.execute(sql)
                                 conn.commit()
-                                
                                 conn.close()
                             except Exception as err:
                                 print str(err)
