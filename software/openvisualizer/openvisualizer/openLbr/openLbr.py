@@ -664,7 +664,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         mac_prev_hop=data[0]
         pkt_lowpan=data[1]
 
-        if pkt_lowpan[0]==self.PAGE_ONE_DISPATCH:
+        if  pkt_lowpan[0]==self.PAGE_ONE_DISPATCH:
             ptr = 1
             if pkt_lowpan[ptr] & self.MASK_6LoRH == self.CRITICAL_6LoRH and pkt_lowpan[ptr+1] == self.TYPE_6LoRH_RPI:
                 # next header is RPI (hop by hop)

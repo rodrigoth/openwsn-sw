@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Wed, 29 Mar 2017 15:08:54
+# on Thu, 06 Apr 2017 10:45:44
 #
 
 components = {
@@ -113,6 +113,7 @@ errorDescriptions = {
   63: "the slot {0} to be added is already in schedule",
   74: "no entry available",
   75: "Neighbor {0}{1} added",
+  76: "output buffer overflow in openserial (available space {0}, towrite {1})",
 }
 
 sixtop_returncode = {

@@ -98,10 +98,12 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     3,
                                     'OutputBuffer',
-                                    '<HH',
+                                    '<HHHH',
                                     [
                                         'index_write',               # H
                                         'index_read',                # H
+                                        'buffer_write',              # H
+                                        'buffer_read',               # H
                                     ],
                                 )
         self._addFieldsParser   (
@@ -166,7 +168,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     8,
                                     'QueueRow',
-                                    '<BBBBBBBBBBBBBBBBBBBB',
+                                    '<BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
                                     [
                                         'creator_0',                 # B
                                         'owner_0',                   # B
@@ -188,6 +190,26 @@ class ParserStatus(Parser.Parser):
                                         'owner_8',                   # B
                                         'creator_9',                 # B
                                         'owner_9',                   # B
+                                        'creator_10',                 # B
+                                        'owner_10',                   # B
+                                        'creator_11',                 # B
+                                        'owner_11',                   # B
+                                        'creator_12',                 # B
+                                        'owner_12',                   # B
+                                        'creator_13',                 # B
+                                        'owner_13',                   # B
+                                        'creator_14',                 # B
+                                        'owner_14',                   # B
+                                        'creator_15',                 # B
+                                        'owner_15',                   # B
+                                        'creator_16',                 # B
+                                        'owner_16',                   # B
+                                        'creator_17',                 # B
+                                        'owner_17',                   # B
+                                        'creator_18',                 # B
+                                        'owner_18',                   # B
+                                        'creator_19',                 # B
+                                        'owner_19',                   # B
                                     ],
                                 )
         self._addFieldsParser   (
@@ -231,7 +253,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     12,
                                     'EB',
-                                    '<BQQBHH48B',
+                                    '<BQQBHHB',
                                     [
                                         'addr_type',                 # B
                                         'addr_bodyH',                # Q
@@ -239,54 +261,24 @@ class ParserStatus(Parser.Parser):
                                         'asn_4',                     # B
                                         'asn_2_3',                   # H
                                         'asn_0_1',                   # H
-                                        'eb_channel_11',            # B
-                                        'eb_channel_12',            # B
-                                        'eb_channel_13',            # B
-                                        'eb_channel_14',            # B
-                                        'eb_channel_15',            # B
-                                        'eb_channel_16',            # B
-                                        'eb_channel_17',            # B
-                                        'eb_channel_18',            # B
-                                        'eb_channel_19',            # B
-                                        'eb_channel_20',            # B
-                                        'eb_channel_21',            # B
-                                        'eb_channel_22',            # B
-                                        'eb_channel_23',            # B
-                                        'eb_channel_24',            # B
-                                        'eb_channel_25',            # B
-                                        'eb_channel_26',            # B
-                                        'ack_channel_11',           # B
-                                        'ack_channel_12',           # B
-                                        'ack_channel_13',           # B
-                                        'ack_channel_14',           # B
-                                        'ack_channel_15',           # B
-                                        'ack_channel_16',           # B
-                                        'ack_channel_17',           # B
-                                        'ack_channel_18',           # B
-                                        'ack_channel_19',           # B
-                                        'ack_channel_20',           # B
-                                        'ack_channel_21',           # B
-                                        'ack_channel_22',           # B
-                                        'ack_channel_23',           # B
-                                        'ack_channel_24',           # B
-                                        'ack_channel_25',           # B
-                                        'ack_channel_26',           # B
-                                        'tx_channel_11',            # B
-                                        'tx_channel_12',            # B
-                                        'tx_channel_13',            # B
-                                        'tx_channel_14',            # B
-                                        'tx_channel_15',            # B
-                                        'tx_channel_16',            # B
-                                        'tx_channel_17',            # B
-                                        'tx_channel_18',            # B
-                                        'tx_channel_19',            # B
-                                        'tx_channel_20',            # B
-                                        'tx_channel_21',            # B
-                                        'tx_channel_22',            # B
-                                        'tx_channel_23',            # B
-                                        'tx_channel_24',            # B
-                                        'tx_channel_25',            # B
-                                        'tx_channel_26',            # B 
+                                        'channel',                   # B
+                                    ],
+                                )
+        self._addFieldsParser  (
+                                    3,
+                                    13,
+                                    'AckTx',
+                                    '<BQQBHHBBB',
+                                    [
+                                        'addr_type',                 # B
+                                        'addr_bodyH',                # Q
+                                        'addr_bodyL',                # Q
+                                        'asn_4',                     # B
+                                        'asn_2_3',                   # H
+                                        'asn_0_1',                   # H
+                                        'ack',                       # B
+                                        'tx',                        # B
+                                        'channel',
                                     ],
                                 )
        
@@ -294,7 +286,7 @@ class ParserStatus(Parser.Parser):
     #======================== public ==========================================
     
     def parseInput(self,input):
-        
+       # print input
         # log
         if log.isEnabledFor(logging.DEBUG):
             log.debug("received input={0}".format(input))
@@ -341,104 +333,38 @@ class ParserStatus(Parser.Parser):
                 
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
-                if statusElem == 12:                        
-                        print returnTuple
-                        node =  str(hex(moteId))[4:6] + str(hex(moteId))[2:4]
-                        if node in ['9788']:
-                            current_time = datetime.now()
+                if statusElem == 13 or statusElem == 12:
+                    #print returnTuple                        
+                    node =  str(hex(moteId))[4:6] + str(hex(moteId))[2:4]
+                    if node in ['b068']:
+                        sender = typeAddr.typeAddr()
+                        sender.update(2,returnTuple[1],returnTuple[2])
+                        asn = typeAsn.typeAsn()
+                        asn.update(returnTuple[5],returnTuple[4],returnTuple[3])    
+                        experiment_id = 1
 
-                            if (((current_time - self.last_time).total_seconds()/60.0) > 2):
-                                 self.asn = typeAsn.typeAsn()
-                                 self.asn.update(returnTuple[5],returnTuple[4],returnTuple[3])
-
-                            sender = typeAddr.typeAddr()
-                            sender.update(2,returnTuple[1],returnTuple[2])
-                          
-                            
-                            eb_11 = returnTuple[6]
-                            eb_12 = returnTuple[7]
-                            eb_13 = returnTuple[8]
-                            eb_14 = returnTuple[9]
-                            eb_15 = returnTuple[10]
-                            eb_16 = returnTuple[11]
-                            eb_17 = returnTuple[12]
-                            eb_18 = returnTuple[13]
-                            eb_19 = returnTuple[14]
-                            eb_20 = returnTuple[15]
-                            eb_21 = returnTuple[16]
-                            eb_22 = returnTuple[17]
-                            eb_23 = returnTuple[18]
-                            eb_24 = returnTuple[19]
-                            eb_25 = returnTuple[20]
-                            eb_26 = returnTuple[21]
-                            
-                            ack_11 = returnTuple[22]
-                            ack_12 = returnTuple[23]
-                            ack_13 = returnTuple[24]
-                            ack_14 = returnTuple[25]
-                            ack_15 = returnTuple[26]
-                            ack_16 = returnTuple[27]
-                            ack_17 = returnTuple[28]
-                            ack_18 = returnTuple[29]
-                            ack_19 = returnTuple[30]
-                            ack_20 = returnTuple[31]
-                            ack_21 = returnTuple[32]
-                            ack_22 = returnTuple[33]
-                            ack_23 = returnTuple[34]
-                            ack_24 = returnTuple[35]
-                            ack_25 = returnTuple[36]
-                            ack_26 = returnTuple[37]
-
-                            tx_11 = returnTuple[38]
-                            tx_12 = returnTuple[39]
-                            tx_13 = returnTuple[40]
-                            tx_14 = returnTuple[41]
-                            tx_15 = returnTuple[42]
-                            tx_16 = returnTuple[43]
-                            tx_17 = returnTuple[44]
-                            tx_18 = returnTuple[45]
-                            tx_19 = returnTuple[46]
-                            tx_20 = returnTuple[47]
-                            tx_21 = returnTuple[48]
-                            tx_22 = returnTuple[49]
-                            tx_23 = returnTuple[50]
-                            tx_24 = returnTuple[51]
-                            tx_25 = returnTuple[52]
-                            tx_26 = returnTuple[53]
-
-                            #nodes[str(sender)] = [tx,ack,eb]
-                            #expected_number_of_nodes = 9
-
-                            #if (len(self.nodes) == expected_number_of_nodes):
-                            try:
-                                conn = psycopg2.connect(database='ExperimentMultiChannel', user='postgres', password='rodrigo', host='2001:660:4701:1001:fd37:8a69:16e6:7525', port='5432')   
-                                cur = conn.cursor()
-                				#cur.execute("SELECT max(experiment_id)  from experiments")
-                				#experiment_id = cur.fetchone()[0]
-                				#if (experiment_id == '' or experiment_id == None):
-                				#    experiment_id = 1
-                				#else:
-                				#    experiment_id = experiment_id + 1
-                                experiment_id = 1
-
-                                #for key,value in self.nodes.iteritems():
-                                sql = "insert into experiments (asn,node,sender,experiment_id,\
-                                eb_11,eb_12,eb_13,eb_14,eb_15,eb_16,eb_17,eb_18,eb_19,eb_20,eb_21,eb_22,eb_23,eb_24,eb_25,eb_26,\
-                                ack_11,ack_12,ack_13,ack_14,ack_15,ack_16,ack_17,ack_18,ack_19,ack_20,ack_21,ack_22,ack_23,ack_24,ack_25,ack_26,\
-                                tx_11,tx_12,tx_13,tx_14,tx_15,tx_16,tx_17,tx_18,tx_19,tx_20,tx_21,tx_22,tx_23,tx_24,tx_25,tx_26)\
-                                values({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},\
-                                {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{})".format("'" + str(self.asn) + "'",
-                                "'" + str(node) + "'" ,"'" + str(sender)+ "'",str(experiment_id),eb_11,eb_12,eb_13,eb_14,eb_15,eb_16,eb_17,eb_18,eb_19,
-                                eb_20,eb_21,eb_22,eb_23,eb_24,eb_25,eb_26,ack_11,ack_12,ack_13,ack_14,ack_15,ack_16,ack_17,ack_18,ack_19,
-                                ack_20,ack_21,ack_22,ack_23,ack_24,ack_25,ack_26,tx_11,tx_12,tx_13,tx_14,tx_15,tx_16,tx_17,tx_18,tx_19,
-                                tx_20,tx_21,tx_22,tx_23,tx_24,tx_25,tx_26) 
-                                cur.execute(sql)
-                                conn.commit()
-                                conn.close()
-                            except Exception as err:
-                                print str(err)
-                                pass     
-                        self.last_time = datetime.now()
+                        if(statusElem == 13):
+                            ack = returnTuple[6]
+                            tx = returnTuple[7]
+                            channel = returnTuple[8]
+                            sql = "insert into experiments_ack_tx (asn,node,sender,experiment_id,\
+                                ack,tx,channel) values ({},{},{},{},{},{},{})".format("'" + str(asn) + "'",
+                                "'" + str(node) + "'" ,"'" + str(sender)+ "'",str(experiment_id),ack,tx,channel) 
+                        else:
+                            channel = returnTuple[6]
+                            sql = "insert into experiments_eb (asn,node,sender,experiment_id,\
+                            channel) values ({},{},{},{},{})".format("'" + str(asn) + "'",
+                            "'" + str(node) + "'" ,"'" + str(sender)+ "'",str(experiment_id),channel) 
+                        try:
+                            conn = psycopg2.connect(database='ExperimentMultiChannel', user='postgres', password='unistra@2017!#', host='localhost', port='5432')   
+                            cur = conn.cursor()
+                            cur.execute(sql)
+                            conn.commit()
+                            conn.close()
+                        except Exception as err:
+                            #print str(err)
+                            pass     
+                    
                 
                 # log
                 if log.isEnabledFor(logging.DEBUG):

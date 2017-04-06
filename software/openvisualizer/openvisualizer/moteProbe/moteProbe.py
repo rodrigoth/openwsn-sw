@@ -30,7 +30,7 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 #============================ functions =======================================
 
 BAUDRATE_TELOSB = 115200
-BAUDRATE_GINA   = 115200
+BAUDRATE_GINA   = 500000
 BAUDRATE_WSN430 = 115200
 
 def findSerialPorts():
@@ -75,7 +75,6 @@ def findSerialPorts():
     # Find all OpenWSN motes that answer to TRIGGERSERIALECHO commands
     # Also test for 500000 to find IoT Lab M3 motes
     mote_ports = []
-
     for port in serialports:
         for baudrate in [port[1], 500000]:
             probe = moteProbe(serialport=(port[0],baudrate))
@@ -89,7 +88,7 @@ def findSerialPorts():
             probe.join()
     
     # log
-    log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
+    print("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
     
     return mote_ports
 
