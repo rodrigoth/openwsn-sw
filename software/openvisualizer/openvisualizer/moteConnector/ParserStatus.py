@@ -15,8 +15,8 @@ from ParserException import ParserException
 import Parser
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.openType import  typeAddr,typeAsn
-import psycopg2
 from datetime import datetime
+import requests
 
 class FieldParsingKey(object):
 
@@ -336,33 +336,38 @@ class ParserStatus(Parser.Parser):
                 if statusElem == 13 or statusElem == 12:
                     #print returnTuple                        
                     node =  str(hex(moteId))[4:6] + str(hex(moteId))[2:4]
-                    if node in ['b068']:
+                    if node in ['b058']:
                         sender = typeAddr.typeAddr()
                         sender.update(2,returnTuple[1],returnTuple[2])
                         asn = typeAsn.typeAsn()
                         asn.update(returnTuple[5],returnTuple[4],returnTuple[3])    
-                        experiment_id = 1
+                        experiment_id = 4
+                        json = {}
+                        url = 'http://[2001:660:4701:1001:6c52:53c1:7c77:47dd]:5000/'
 
                         if(statusElem == 13):
                             ack = returnTuple[6]
                             tx = returnTuple[7]
                             channel = returnTuple[8]
-                            sql = "insert into experiments_ack_tx (asn,node,sender,experiment_id,\
-                                ack,tx,channel) values ({},{},{},{},{},{},{})".format("'" + str(asn) + "'",
-                                "'" + str(node) + "'" ,"'" + str(sender)+ "'",str(experiment_id),ack,tx,channel) 
+                            json['asn'] = str(asn)
+                            json['node'] = node
+                            json['sender'] = str(sender)
+                            json['ack'] = ack
+                            json['tx'] = tx
+                            json['channel'] = channel
+                            url = url + 'pdr'
+
                         else:
                             channel = returnTuple[6]
-                            sql = "insert into experiments_eb (asn,node,sender,experiment_id,\
-                            channel) values ({},{},{},{},{})".format("'" + str(asn) + "'",
-                            "'" + str(node) + "'" ,"'" + str(sender)+ "'",str(experiment_id),channel) 
+                            json['asn'] = str(asn)
+                            json['node'] = node
+                            json['sender'] = str(sender)
+                            json['channel'] = channel
+                            url = url + 'eb'
                         try:
-                            conn = psycopg2.connect(database='ExperimentMultiChannel', user='postgres', password='unistra@2017!#', host='localhost', port='5432')   
-                            cur = conn.cursor()
-                            cur.execute(sql)
-                            conn.commit()
-                            conn.close()
+                            requests.post(url,json=json)
                         except Exception as err:
-                            #print str(err)
+                            print str(err)
                             pass     
                     
                 
