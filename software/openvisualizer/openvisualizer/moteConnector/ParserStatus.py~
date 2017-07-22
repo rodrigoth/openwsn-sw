@@ -16,7 +16,7 @@ import Parser
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.openType import  typeAddr,typeAsn
 from datetime import datetime
-import sqlite3
+import requests
 
 class FieldParsingKey(object):
 
@@ -253,7 +253,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     12,
                                     'EB',
-                                    '<BQQBHHBB',
+                                    '<BQQBHHB',
                                     [
                                         'addr_type',                 # B
                                         'addr_bodyH',                # Q
@@ -261,8 +261,7 @@ class ParserStatus(Parser.Parser):
                                         'asn_4',                     # B
                                         'asn_2_3',                   # H
                                         'asn_0_1',                   # H
-                                        'channel',                   # B,
-                                        'iseb',                      # B
+                                        'channel',                   # B
                                     ],
                                 )
         self._addFieldsParser  (
@@ -343,30 +342,33 @@ class ParserStatus(Parser.Parser):
                         asn = typeAsn.typeAsn()
                         asn.update(returnTuple[5],returnTuple[4],returnTuple[3])    
                         experiment_id = 4
-                        
-                        sql = ''
-                        
+                        json = {}
+                        url = 'http://[2001:660:4701:1001:6c52:53c1:7c77:47dd]:5000/'
+
                         if(statusElem == 13):
                             ack = returnTuple[6]
                             tx = returnTuple[7]
                             channel = returnTuple[8]
-                            sql = "insert into experiments_ack_tx (asn,node,sender,experiment_id,\
-                            ack,tx,channel) values ({},{},{},{},{},{},{})".format("'" + str(asn) + "'","'" + str(node) + "'" ,"'" + str(sender)+ "'",str(experiment_id),str(ack),str(tx),str(channel))   
+                            json['asn'] = str(asn)
+                            json['node'] = node
+                            json['sender'] = str(sender)
+                            json['ack'] = ack
+                            json['tx'] = tx
+                            json['channel'] = channel
+                            url = url + 'pdr'
 
                         else:
                             channel = returnTuple[6]
-                            iseb =  returnTuple[7]
-                            sql = "insert into experiments_eb (asn,node,sender,experiment_id,\
-                            channel,iseb) values ({},{},{},{},{},{})".format("'" + str(asn) + "'","'" + str(node) + "'" ,"'" + str(sender)+ "'",str(experiment_id),str(channel),str(iseb)) 
-                            
+                            json['asn'] = str(asn)
+                            json['node'] = node
+                            json['sender'] = str(sender)
+                            json['channel'] = channel
+                            url = url + 'eb'
                         try:
-                            conn = sqlite3.connect('/home/root/A8/experiment.db')
-                            conn.execute(sql)
-                            conn.commit()
+                            requests.post(url,json=json)
                         except Exception as err:
                             print str(err)
                             pass     
-                        conn.close()
                     
                 
                 # log

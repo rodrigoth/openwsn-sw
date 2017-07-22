@@ -70,8 +70,7 @@ def findSerialPorts():
         else:
             portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*', '/dev/ttyA8_M3']
         for mask in portMask :
-           # serialports += [(s,BAUDRATE_GINA) for s in glob.glob(mask)]
-	   serialports = [("/dev/ttyA8_M3", 500000)]
+            serialports += [(s,BAUDRATE_GINA) for s in glob.glob(mask)]
 
     # Find all OpenWSN motes that answer to TRIGGERSERIALECHO commands
     # Also test for 500000 to find IoT Lab M3 motes
