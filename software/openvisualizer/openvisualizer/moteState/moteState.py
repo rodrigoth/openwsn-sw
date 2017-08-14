@@ -316,6 +316,42 @@ class StateEB(StateElem):
         self.data[0]['channel']=notif.channel
 
 
+class StateUinject(StateElem):
+    
+    def update(self,notif):
+        StateElem.update(self)
+        if len(self.data)==0:
+            self.data.append({})
+        if 'addr' not in self.data[0]:
+            self.data[0]['addr']                 = typeAddr.typeAddr()
+        self.data[0]['addr'].update(notif.addr_type,
+                                    notif.addr_bodyH,
+                                    notif.addr_bodyL)
+
+        if 'hop' not in self.data[0]:
+            self.data[0]['hop']                 = typeAddr.typeAddr()
+        self.data[0]['hop'].update( notif.hop_type,
+                                    notif.hop_bodyH,
+                                    notif.hop_bodyL)
+
+        if 'asn' not in self.data[0]:
+            self.data[0]['asn']                  = typeAsn.typeAsn()
+        self.data[0]['asn'].update(notif.asn_0_1,
+                                   notif.asn_2_3,
+                                   notif.asn_4)
+
+
+        if 'in' not in self.data[0]:
+            self.data[0]['in']                  = typeAsn.typeAsn()
+        self.data[0]['in'].update(notif.in_0_1,
+                                   notif.in_2_3,
+                                   notif.in_4)
+
+
+        self.data[0]['track']=notif.track
+        self.data[0]['is_sent']=notif.is_sent
+        
+
 class StateIdManager(StateElem):
     
     def __init__(self,eventBusClient,moteConnector):
@@ -448,6 +484,7 @@ class moteState(eventBusClient.eventBusClient):
     ST_KAPERIOD         = 'kaPeriod'
     ST_EB               = 'EB'
     ST_ACK_TX           = 'AckTx'
+    ST_UINJECT          = 'Uinject'
     
     ST_ALL              = [
         ST_OUPUTBUFFER,
@@ -462,7 +499,8 @@ class moteState(eventBusClient.eventBusClient):
         ST_MYDAGRANK,
         ST_KAPERIOD,
         ST_EB,
-        ST_ACK_TX
+        ST_ACK_TX,
+        ST_UINJECT
     ]
     
     TRIGGER_DAGROOT     = 'DAGroot'
@@ -576,6 +614,7 @@ class moteState(eventBusClient.eventBusClient):
         self.state[self.ST_KAPERIOD]        = StatekaPeriod()
         self.state[self.ST_EB]              = StateEB()
         self.state[self.ST_ACK_TX]          = StateAckTx()
+        self.state[self.ST_UINJECT]         = StateUinject()
         
         self.notifHandlers = {
             self.parserStatus.named_tuple[self.ST_OUPUTBUFFER]:
@@ -604,6 +643,8 @@ class moteState(eventBusClient.eventBusClient):
                 self.state[self.ST_EB].update,    
             self.parserStatus.named_tuple[self.ST_ACK_TX]:
                 self.state[self.ST_ACK_TX].update,
+            self.parserStatus.named_tuple[self.ST_UINJECT]:
+                self.state[self.ST_UINJECT].update,
 
         }
         

@@ -14,6 +14,9 @@ from pydispatch import dispatcher
 
 from ParserException import ParserException
 import Parser
+from openvisualizer.openType import  typeAddr,typeAsn
+import requests
+
 
 class ParserData(Parser.Parser):
     
@@ -45,6 +48,7 @@ class ParserData(Parser.Parser):
         if log.isEnabledFor(logging.DEBUG):
             log.debug("received data {0}".format(input))
         
+        
         # ensure input not short longer than header
         self._checkLength(input)
    
@@ -52,13 +56,26 @@ class ParserData(Parser.Parser):
         #asn comes in the next 5bytes.  
         
         asnbytes=input[2:7]
-        (self._asn) = struct.unpack('<BHH',''.join([chr(c) for c in asnbytes]))
+        (self._asn) = struct.unpack('<HHB',''.join([chr(c) for c in asnbytes]))
+        asn = typeAsn.typeAsn()
+        asn.update(self._asn[0],self._asn[1],self._asn[2]) 
+        
+
         
         #source and destination of the message
         dest = input[7:15]
+        dest_bytes = struct.unpack('<Q',''.join([chr(c) for c in dest]))
+        dest_address = typeAddr.typeAddr()
+        dest_address.update(2,dest_bytes[0],0)
+        
         
         #source is elided!!! so it is not there.. check that.
         source = input[15:23]
+        source_bytes = struct.unpack('<Q',''.join([chr(c) for c in source]))
+        source_address = typeAddr.typeAddr()
+        source_address.update(2,source_bytes[0],0)
+        
+
         
         if log.isEnabledFor(logging.DEBUG):
             a="".join(hex(c) for c in dest)
@@ -67,14 +84,54 @@ class ParserData(Parser.Parser):
         if log.isEnabledFor(logging.DEBUG):
             a="".join(hex(c) for c in source)
             log.debug("source address (just previous hop) of the packet is {0} ".format(a))
+
         
         # remove asn src and dest and mote id at the beginning.
         # this is a hack for latency measurements... TODO, move latency to an app listening on the corresponding port.
         # inject end_asn into the packet as well
         input = input[23:]
+        #print input
+        #print len(input)
+
+        if len(input) == 36 or len(input) == 37 :
+            if len(input) == 36:
+              asn_in_bytes = input[26:31]
+              asn_in_bytes = struct.unpack('<HHB',''.join([chr(c) for c in asn_in_bytes]))
+              asn_in = typeAsn.typeAsn()
+              asn_in.update(asn_in_bytes[0],asn_in_bytes[1],asn_in_bytes[2]) 
+              track = input[31]
+              seqnum_bytes = input[32:]
+              seqnum  = struct.unpack('>I',''.join([chr(c) for c in seqnum_bytes]))
+
+            if len(input) == 37:
+              asn_in_bytes = input[27:32]
+              asn_in_bytes = struct.unpack('<HHB',''.join([chr(c) for c in asn_in_bytes]))
+              asn_in = typeAsn.typeAsn()
+              asn_in.update(asn_in_bytes[0],asn_in_bytes[1],asn_in_bytes[2]) 
+              track = input[32]
+              seqnum_bytes = input[33:]
+              seqnum  = struct.unpack('>I',''.join([chr(c) for c in seqnum_bytes]))
+          
+            
+            json = {}
+            json['dest_address'] = str(dest_address)
+            json['source'] = str(source_address)
+            json['asn'] = str(asn)
+            json['asn_in'] = str(asn_in)
+            json['track'] = str(track)
+            json['seqnum'] = str(seqnum[0])
+            experiment_id = 5
+            #print json
+
+            url = 'http://[2001:660:4701:f018:0:82ff:fe4f:3091]:5000/'
+            url = url + 'received'
+            requests.post(url,json=json)
+
         
         if log.isEnabledFor(logging.DEBUG):
             log.debug("packet without source,dest and asn {0}".format(input))
+
+        #print "packet without source,dest and asn {0}".format(input)
         
         # when the packet goes to internet it comes with the asn at the beginning as timestamp.
          
@@ -90,6 +147,7 @@ class ParserData(Parser.Parser):
                SN       = input[len(input)-23:len(input)-21] # SN sent by mote
                parent   = input[len(input)-21:len(input)-13] # the parent node is the first element (used to know topology)
                node     = input[len(input)-13:len(input)-5]  # the node address
+               print timeinus
                
                if timeinus<0xFFFF:
                # notify latency manager component. only if a valid value

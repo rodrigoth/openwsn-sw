@@ -16,6 +16,7 @@ import Parser
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.openType import  typeAddr,typeAsn
 from datetime import datetime
+import requests
 import sqlite3
 
 class FieldParsingKey(object):
@@ -282,12 +283,34 @@ class ParserStatus(Parser.Parser):
                                         'channel',
                                     ],
                                 )
+        self._addFieldsParser  (
+                                    3,
+                                    14,
+                                    'Uinject',
+                                    '<BQQBQQBHHBHHBB',
+                                    [
+                                        'addr_type',                 # B
+                                        'addr_bodyH',                # Q
+                                        'addr_bodyL',                # Q
+                                        'hop_type',                  # B
+                                        'hop_bodyH',                 # Q
+                                        'hop_bodyL',                 # Q
+                                        'asn_4',                     # B
+                                        'asn_2_3',                   # H
+                                        'asn_0_1',                   # H
+                                        'in_4',                      # B
+                                        'in_2_3',                    # H
+                                        'in_0_1',                    # H
+                                        'track',                     # B
+                                        'is_sent',                   # B
+                                    ],
+                                )
        
     
     #======================== public ==========================================
     
     def parseInput(self,input):
-       # print input
+        #print input
         # log
         if log.isEnabledFor(logging.DEBUG):
             log.debug("received input={0}".format(input))
@@ -334,39 +357,71 @@ class ParserStatus(Parser.Parser):
                 
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
+                experiment_id = 5
+                url = 'http://[2001:660:4701:f018:0:82ff:fe4f:3091]:5000/'
+                json = {}
+                if statusElem == 14:
+                    sender = typeAddr.typeAddr()
+                    sender.update(2,returnTuple[1],returnTuple[2])                    
+
+                    hop = typeAddr.typeAddr()
+                    hop.update(2,returnTuple[4],returnTuple[5])
+
+                    
+                    asn = typeAsn.typeAsn()
+                    asn.update(returnTuple[8],returnTuple[7],returnTuple[6]) 
+
+                    asn_in = typeAsn.typeAsn()
+                    asn_in.update(returnTuple[11],returnTuple[10],returnTuple[9])
+
+                    track = returnTuple[12]
+                    is_sent = returnTuple[13]
+
+                    json['asn'] = str(asn)
+                    json['sender'] = str(sender)
+                    json['hop'] = str(hop)
+                    json['asn_in'] = str(asn_in)
+                    json['track'] = track
+                    url = url + 'sent'
+                    requests.post(url,json=json)
+
+
+                    #print returnTuple
                 if statusElem == 13 or statusElem == 12:
                     #print returnTuple                        
                     node =  str(hex(moteId))[4:6] + str(hex(moteId))[2:4]
-                    if node in ['9663']:
-                        sender = typeAddr.typeAddr()
-                        sender.update(2,returnTuple[1],returnTuple[2])
-                        asn = typeAsn.typeAsn()
-                        asn.update(returnTuple[5],returnTuple[4],returnTuple[3])    
-                        experiment_id = 4
-                        
-                        sql = ''
-                        
-                        if(statusElem == 13):
-                            ack = returnTuple[6]
-                            tx = returnTuple[7]
-                            channel = returnTuple[8]
-                            sql = "insert into experiments_ack_tx (asn,node,sender,experiment_id,\
-                            ack,tx,channel) values ({},{},{},{},{},{},{})".format("'" + str(asn) + "'","'" + str(node) + "'" ,"'" + str(sender)+ "'",str(experiment_id),str(ack),str(tx),str(channel))   
+                    #if node in ['9663']:
+                    sender = typeAddr.typeAddr()
+                    sender.update(2,returnTuple[1],returnTuple[2])
+                    asn = typeAsn.typeAsn()
+                    asn.update(returnTuple[5],returnTuple[4],returnTuple[3])    
+                    
+                    
+                    
+                    if(statusElem == 13):
+                        ack = returnTuple[6]
+                        tx = returnTuple[7]
+                        channel = returnTuple[8]
+                        json['asn'] = str(asn)
+                        json['node'] = node
+                        json['sender'] = str(sender)
+                        json['ack'] = ack
+                        json['tx'] = tx
+                        json['channel'] = channel
+                        url = url + 'pdr'
 
-                        else:
-                            channel = returnTuple[6]
-                            iseb =  returnTuple[7]
-                            sql = "insert into experiments_eb (asn,node,sender,experiment_id,\
-                            channel,iseb) values ({},{},{},{},{},{})".format("'" + str(asn) + "'","'" + str(node) + "'" ,"'" + str(sender)+ "'",str(experiment_id),str(channel),str(iseb)) 
-                            
-                        try:
-                            conn = sqlite3.connect('/home/root/A8/experiment.db')
-                            conn.execute(sql)
-                            conn.commit()
-                        except Exception as err:
-                            print str(err)
-                            pass     
-                        conn.close()
+                    else:
+                        channel = returnTuple[6]
+                        iseb =  returnTuple[7]
+                        json['asn'] = str(asn)
+                        json['node'] = node
+                        json['sender'] = str(sender)
+                        json['channel'] = channel
+                        json['iseb'] = iseb
+                        url = url + 'eb'
+                    
+                    requests.post(url,json=json)    
+                    
                     
                 
                 # log
@@ -390,3 +445,6 @@ class ParserStatus(Parser.Parser):
         
         # define named tuple
         self.named_tuple[name] = collections.namedtuple("Tuple_"+name, fields)
+
+   
+        
