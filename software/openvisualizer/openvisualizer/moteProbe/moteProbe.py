@@ -30,7 +30,7 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 #============================ functions =======================================
 
 BAUDRATE_TELOSB = 115200
-BAUDRATE_GINA   = 500000
+BAUDRATE_GINA   = 115200
 BAUDRATE_WSN430 = 115200
 
 def findSerialPorts():
@@ -68,10 +68,11 @@ def findSerialPorts():
         if platform.system() == 'Darwin':
             portMask = ['/dev/tty.usbserial-*']
         else:
-            portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*', '/dev/ttyA8_M3']
+            #portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*', '/dev/ttyA8_M3']
+            portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*']
         for mask in portMask :
-           # serialports += [(s,BAUDRATE_GINA) for s in glob.glob(mask)]
-	   serialports = [("/dev/ttyA8_M3", 500000)]
+            serialports += [(s,BAUDRATE_GINA) for s in glob.glob(mask)]
+	   #serialports = [("/dev/ttyA8_M3", 500000)]
 
     # Find all OpenWSN motes that answer to TRIGGERSERIALECHO commands
     # Also test for 500000 to find IoT Lab M3 motes
