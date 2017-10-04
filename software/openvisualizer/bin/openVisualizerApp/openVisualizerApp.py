@@ -12,6 +12,7 @@ import sys
 import os
 import logging
 import json
+import signal
 
 from openvisualizer.OVtracer import OVtracer
 
@@ -186,12 +187,13 @@ class OpenVisualizerApp(object):
     def close(self):
         '''Closes all thread-based components'''
         
-        log.info('Closing OpenVisualizer')
+        print('Closing OpenVisualizer')
         self.openTun.close()
         self.rpl.close()
         self.jrc.close()
         for probe in self.moteProbes:
             probe.close()
+        os.kill(os.getpid(), signal.SIGTERM)
                 
     def getMoteState(self, moteid):
         '''

@@ -14,6 +14,8 @@ import struct
 from ParserException import ParserException
 import Parser
 import openvisualizer.openvisualizer_utils as u
+from openvisualizer.simpleDispatcher import SimpleWebDispatcher
+
 
 class FieldParsingKey(object):
 
@@ -233,6 +235,17 @@ class ParserStatus(Parser.Parser):
                                         'joinedAsn_0_1',                   # H
                                     ],
                                 )
+        self._addFieldsParser   (
+                                    3,
+                                    13,
+                                    'ParentSwitch',
+                                    '<BHH',
+                                    [
+                                        'parentswitchAsn_4',                     # B
+                                        'parentswitchAsn_2_3',                   # H
+                                        'parentswitchAsn_0_1',                   # H
+                                    ],
+                                )
     #======================== public ==========================================
     
     def parseInput(self,input):
@@ -283,6 +296,11 @@ class ParserStatus(Parser.Parser):
                 
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
+
+                #if env['ENABLESIMPLEDISPATCHER']:
+                if statusElem == 13:
+                    dipatcher = SimpleWebDispatcher.SimpleWebDispatcher("remote_web_server")
+                    dipatcher.send(returnTuple,moteId)
                 
                 # log
                 if log.isEnabledFor(logging.DEBUG):

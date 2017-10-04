@@ -68,7 +68,9 @@ def findSerialPorts():
         if platform.system() == 'Darwin':
             portMask = ['/dev/tty.usbserial-*']
         else:
-            portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*', '/dev/ttyA8_M3']
+            #portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*', '/dev/ttyA8_M3']
+            portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*']
+
         for mask in portMask :
             serialports += [(s,BAUDRATE_GINA) for s in glob.glob(mask)]
 
@@ -80,8 +82,8 @@ def findSerialPorts():
         for baudrate in [port[1], 500000]:
             probe = moteProbe(serialport=(port[0],baudrate))
             tester = SerialTester(probe.portname)
-            tester.setNumTestPkt(1)
-            tester.setTimeout(2)
+            tester.setNumTestPkt(5)
+            tester.setTimeout(1)
             tester.test(blocking=True)
             if tester.getStats()['numOk'] >= 1:
                 mote_ports.append((port[0],baudrate));
@@ -89,7 +91,7 @@ def findSerialPorts():
             probe.join()
     
     # log
-    log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
+    print("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
     
     return mote_ports
 

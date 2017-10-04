@@ -10,6 +10,9 @@ import platform
 import SCons
 import sconsUtils
 
+
+
+
 #============================ banner ==========================================
 
 banner  = [""]
@@ -190,6 +193,12 @@ AddOption('--rover',
     default   = False,
     action    = 'store_true')
 runnerEnv['ROVEROPT'] = GetOption('roverOpt')
+
+AddOption('--enableSimpleDispatcher',
+    dest      = 'dispatcher',
+    default   = '1',
+    type      = 'string')
+runnerEnv['ENABLESIMPLEDISPATCHER'] = GetOption('dispatcher')
 
 #============================ SCons targets ===================================
 

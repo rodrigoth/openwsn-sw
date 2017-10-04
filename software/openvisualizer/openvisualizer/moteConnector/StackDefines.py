@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Mon, 14 Aug 2017 10:37:31
+# on Thu, 07 Sep 2017 16:22:47
 #
 
 components = {
@@ -49,6 +49,7 @@ components = {
   42: "UMONITOR",
   43: "CJOIN",
   44: "OPENOSCOAP",
+  45: "RANKING",
 }
 
 errorDescriptions = {
@@ -125,6 +126,13 @@ errorDescriptions = {
   71: "OSCOAP replay protection failed",
   72: "OSCOAP decryption and tag verification failed",
   73: "Aborted join process {code location {0}}",
+  80: "Ranking array is empty",
+  81: "Parent not changed",
+  82: "No parent found",
+  83: "First parent index {0}",
+  84: "First parent index {0} second parent {1}",
+  85: "Array not empty",
+  86: "Parent changed",
 }
 
 sixtop_returncode = {

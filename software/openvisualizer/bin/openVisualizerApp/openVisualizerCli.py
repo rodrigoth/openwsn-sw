@@ -145,6 +145,7 @@ class OpenVisualizerCli(Cmd):
                     pass
     
     def do_quit(self, arg):
+        print "tessssste"
         self.app.close()
         return True
 
