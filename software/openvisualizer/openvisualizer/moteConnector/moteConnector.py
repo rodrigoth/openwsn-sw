@@ -79,7 +79,7 @@ class moteConnector(eventBusClient.eventBusClient):
             assert isinstance(eventSubType,str)
         except ParserException.ParserException as err:
             # log
-            log.error(str(err))
+            #log.error(str(err))
             pass
         else:
             # dispatch

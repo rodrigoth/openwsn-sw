@@ -394,6 +394,36 @@ class StateTable(StateElem):
             self.data.append(self.meta[0]['rowClass']())
         self.data[notif.row].update(notif)
 
+
+class StateParentSwitch(StateElem):
+    def update(self,notif):
+        StateElem.update(self)
+        if len(self.data)==0:
+            self.data.append({})
+        if 'parentswitchAsn' not in self.data[0]:
+            self.data[0]['parentswitchAsn'] = typeAsn.typeAsn()
+        self.data[0]['parentswitchAsn'].update(notif.parentswitchAsn_0_1,
+                                   notif.parentswitchAsn_2_3,
+                                   notif.parentswitchAsn_4)
+        if 'addr' not in self.data[0]:
+            self.data[0]['addr'] = typeAddr.typeAddr()
+        self.data[0]['addr'].update(notif.addr_type,
+                                    notif.addr_bodyH,
+                                    notif.addr_bodyL)
+
+
+class StateRequest6p(StateElem):
+    def update(self,notif):
+        StateElem.update(self)
+        if len(self.data)==0:
+            self.data.append({})
+        if 'Request6p' not in self.data[0]:
+            self.data[0]['Request6p']  = typeAsn.typeAsn()
+        self.data[0]['Request6p'].update(notif.Request6p_0_1,
+                                   notif.Request6p_2_3,
+                                   notif.Request6p_4)
+        self.data[0]['iana_code'] = notif.iana_code
+
 class moteState(eventBusClient.eventBusClient):
     
     ST_OUPUTBUFFER      = 'OutputBuffer'
@@ -411,6 +441,8 @@ class moteState(eventBusClient.eventBusClient):
     ST_MYDAGRANK        = 'MyDagRank'
     ST_KAPERIOD         = 'kaPeriod'
     ST_JOINED           = 'Joined'
+    ST_PARENTSWITCH     = 'ParentSwitch'
+    ST_6PREQUEST        = 'Request6p'
     ST_ALL              = [
         ST_OUPUTBUFFER,
         ST_ASN,
@@ -543,6 +575,8 @@ class moteState(eventBusClient.eventBusClient):
                                               )
         self.state[self.ST_MYDAGRANK]       = StateMyDagRank()
         self.state[self.ST_KAPERIOD]        = StatekaPeriod()
+        self.state[self.ST_PARENTSWITCH]    = StateParentSwitch()
+        self.state[self.ST_6PREQUEST]       = StateRequest6p()
         
         self.notifHandlers = {
             self.parserStatus.named_tuple[self.ST_OUPUTBUFFER]:
@@ -569,6 +603,11 @@ class moteState(eventBusClient.eventBusClient):
                 self.state[self.ST_KAPERIOD].update,
             self.parserStatus.named_tuple[self.ST_JOINED]:
                 self.state[self.ST_JOINED].update,
+            self.parserStatus.named_tuple[self.ST_PARENTSWITCH]:
+                self.state[self.ST_PARENTSWITCH].update,
+            self.parserStatus.named_tuple[self.ST_6PREQUEST]:
+                self.state[self.ST_6PREQUEST].update,
+
 
         }
         

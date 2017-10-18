@@ -12,7 +12,7 @@ import sys
 import os
 import logging
 import json
-
+import signal
 from openvisualizer.OVtracer import OVtracer
 
 log = logging.getLogger('openVisualizerApp')
@@ -192,6 +192,7 @@ class OpenVisualizerApp(object):
         self.jrc.close()
         for probe in self.moteProbes:
             probe.close()
+        os.kill(os.getpid(), signal.SIGTERM)
                 
     def getMoteState(self, moteid):
         '''

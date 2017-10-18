@@ -5,15 +5,19 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 import logging
 log = logging.getLogger('ParserStatus')
-log.setLevel(logging.ERROR)
-log.addHandler(logging.NullHandler())
+log.setLevel(logging.DEBUG)
+#log.addHandler(logging.StreamHandler())
 
 import collections
 import struct
-
+import os
 from ParserException import ParserException
 import Parser
 import openvisualizer.openvisualizer_utils as u
+from openvisualizer.simpleDispatcher import status_dispatcher,address_dispatcher
+import status_type
+from openvisualizer.openType import  typeAddr,typeAsn
+
 
 class FieldParsingKey(object):
 
@@ -233,6 +237,33 @@ class ParserStatus(Parser.Parser):
                                         'joinedAsn_0_1',                   # H
                                     ],
                                 )
+
+        self._addFieldsParser   (
+                                    3,
+                                    13,
+                                    'ParentSwitch',
+                                    '<BHHBQQ',
+                                    [
+                                        'parentswitchAsn_4',                     # B
+                                        'parentswitchAsn_2_3',                   # H
+                                        'parentswitchAsn_0_1',                   # H
+                                        'addr_type',                             # B
+                                        'addr_bodyH',                            # Q
+                                        'addr_bodyL',                            # Q
+                                    ],
+                                )
+        self._addFieldsParser   (
+                                    3,
+                                    14,
+                                    'Request6p',
+                                    '<BHHB',
+                                    [
+                                        'Request6p_4',                     # B
+                                        'Request6p_2_3',                   # H
+                                        'Request6p_0_1',                   # H
+                                        'iana_code',                       # B
+                                    ],
+                                )
     #======================== public ==========================================
     
     def parseInput(self,input):
@@ -258,6 +289,7 @@ class ParserStatus(Parser.Parser):
         
         # jump the header bytes
         input = input[3:]
+
         
         # call the next header parser
         for key in self.fieldsParsingKeys:
@@ -283,6 +315,31 @@ class ParserStatus(Parser.Parser):
                 
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
+                
+                '''if statusElem == 1:
+                    print returnTuple
+                    output  = []
+                    output += ['-'.join(["%.2x"%b for b in returnTuple[5:13]])]
+                    output += [' ({0})'.format('64b')]
+                    output = ''.join(output)
+
+                     
+                    dispatcher =  address_dispatcher.AddressDispatcher("remote_web_server","mac_address")
+                    dispatcher.send(os.uname()[1],output)'''
+
+
+                if statusElem == status_type.StatusTypes.ParentSwitch or statusElem == status_type.StatusTypes.Request6p:
+                    if statusElem == status_type.StatusTypes.ParentSwitch :
+                        newParent = typeAddr.typeAddr()
+                        newParent.update(2,returnTuple[4],returnTuple[5]) 
+                        dispatcher = status_dispatcher.StatusDispatcher(statusElem,"remote_web_server","parent_switch")
+                        dispatcher.send(returnTuple,os.uname()[1],newParent)
+                
+                    if statusElem == status_type.StatusTypes.Request6p:
+                        dispatcher = status_dispatcher.StatusDispatcher(statusElem,"remote_web_server","request_6p")
+                        dispatcher.send(returnTuple,os.uname()[1],"")
+                   
+                    
                 
                 # log
                 if log.isEnabledFor(logging.DEBUG):

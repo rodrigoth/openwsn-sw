@@ -94,7 +94,7 @@ class ParserInfoErrorCritical(Parser.Parser):
         if   self.severity==self.SEVERITY_INFO:
             log.info(output)
         elif self.severity==self.SEVERITY_ERROR:
-            log.error(output)
+            print(output)
         elif self.severity==self.SEVERITY_CRITICAL:
             log.critical(output)
         else:

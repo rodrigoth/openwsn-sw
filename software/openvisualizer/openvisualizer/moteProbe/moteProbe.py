@@ -5,8 +5,8 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 import logging
 log = logging.getLogger('moteProbe')
-log.setLevel(logging.ERROR)
-log.addHandler(logging.NullHandler())
+log.setLevel(logging.INFO)
+log.addHandler(logging.StreamHandler())
 
 import os
 if os.name=='nt':       # Windows
@@ -26,6 +26,8 @@ import OpenHdlc
 import openvisualizer.openvisualizer_utils as u
 from   openvisualizer.moteConnector import OpenParser
 from   openvisualizer.moteConnector.SerialTester import SerialTester
+from openvisualizer.simpleDispatcher import log_dispatcher
+
 
 #============================ functions =======================================
 
@@ -68,7 +70,8 @@ def findSerialPorts():
         if platform.system() == 'Darwin':
             portMask = ['/dev/tty.usbserial-*']
         else:
-            portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*', '/dev/ttyA8_M3']
+            #portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*', '/dev/ttyA8_M3']
+             portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*']
         for mask in portMask :
             serialports += [(s,BAUDRATE_GINA) for s in glob.glob(mask)]
 
@@ -80,7 +83,7 @@ def findSerialPorts():
         for baudrate in [port[1], 500000]:
             probe = moteProbe(serialport=(port[0],baudrate))
             tester = SerialTester(probe.portname)
-            tester.setNumTestPkt(1)
+            tester.setNumTestPkt(5)
             tester.setTimeout(2)
             tester.test(blocking=True)
             if tester.getStats()['numOk'] >= 1:
@@ -88,7 +91,10 @@ def findSerialPorts():
             probe.close()
             probe.join()
     
-    # log
+    if not mote_ports:
+        dispatcher = log_dispatcher.LogDispatcher("remote_web_server","mote_probe_log")
+        dispatcher.send(os.uname()[1])
+
     log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
     
     return mote_ports

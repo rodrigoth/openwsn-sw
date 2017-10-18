@@ -14,6 +14,9 @@ from pydispatch import dispatcher
 
 from ParserException import ParserException
 import Parser
+from openvisualizer.simpleDispatcher import data_dispatcher
+from openvisualizer.openType import  typeAddr,typeAsn
+
 
 class ParserData(Parser.Parser):
     
@@ -53,7 +56,9 @@ class ParserData(Parser.Parser):
         #asn comes in the next 5bytes.  
         
         asnbytes=input[2:7]
-        (self._asn) = struct.unpack('<BHH',''.join([chr(c) for c in asnbytes]))
+        (self._asn) = struct.unpack('<HHB',''.join([chr(c) for c in asnbytes]))
+        asn = typeAsn.typeAsn()
+        asn.update(self._asn[0],self._asn[1],self._asn[2]) 
         
         #source and destination of the message
         dest = input[7:15]
@@ -74,6 +79,51 @@ class ParserData(Parser.Parser):
         # inject end_asn into the packet as well
         input = input[23:]
         
+        #print input
+        #print " "
+        #print len(input)
+
+        if len(input) == 43:
+            asn_in_bytes = input[34:39]
+            asn_in_bytes = struct.unpack('<HHB',''.join([chr(c) for c in asn_in_bytes]))
+            asn_in = typeAsn.typeAsn()
+            asn_in.update(asn_in_bytes[0],asn_in_bytes[1],asn_in_bytes[2]) 
+
+            seqnum_bytes = input[39:]
+            seqnum  = struct.unpack('>I',''.join([chr(c) for c in seqnum_bytes]))
+
+            sender = input[26:34]
+            source_address  = []
+            source_address += ['-'.join(["%.2x"%b for b in sender])]
+            source_address += [' ({0})'.format('64b')]
+            source_address = ''.join(source_address)
+
+            dispatcher = data_dispatcher.DataDispatcher("remote_web_server","received")
+            dispatcher.send(str(asn),str(asn_in),str(source_address),seqnum[0])
+
+        if len(input) == 44:
+            asn_in_bytes = input[35:40]
+            asn_in_bytes = struct.unpack('<HHB',''.join([chr(c) for c in asn_in_bytes]))
+            asn_in = typeAsn.typeAsn()
+            asn_in.update(asn_in_bytes[0],asn_in_bytes[1],asn_in_bytes[2]) 
+
+            seqnum_bytes = input[40:]
+            seqnum  = struct.unpack('>I',''.join([chr(c) for c in seqnum_bytes]))
+
+            sender = input[27:35]
+            source_address  = []
+            source_address += ['-'.join(["%.2x"%b for b in sender])]
+            source_address += [' ({0})'.format('64b')]
+            source_address = ''.join(source_address)            
+
+
+            dispatcher = data_dispatcher.DataDispatcher("remote_web_server","received")
+            dispatcher.send(str(asn),str(asn_in),str(source_address),seqnum[0])
+
+
+            
+
+        
         if log.isEnabledFor(logging.DEBUG):
             log.debug("packet without source,dest and asn {0}".format(input))
         
@@ -91,9 +141,9 @@ class ParserData(Parser.Parser):
                     pass
                 else:
                     # this usually happens when the serial port framing is not correct and more than one message is parsed at the same time. this will be solved with HDLC framing.
-                    print "Wrong latency computation {0} = {1} mS".format(str(node),timeinus)
-                    print ",".join(hex(c) for c in input)
-                    log.warning("Wrong latency computation {0} = {1} mS".format(str(node),timeinus))
+                    #print "Wrong latency computation {0} = {1} mS".format(str(node),timeinus)
+                    #print ",".join(hex(c) for c in input)
+                    #log.warning("Wrong latency computation {0} = {1} mS".format(str(node),timeinus))
                     pass
                 # in case we want to send the computed time to internet..
                 # computed=struct.pack('<H', timeinus)#to be appended to the pkt

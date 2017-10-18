@@ -1,4 +1,6 @@
 import threading
+import sys
+sys.path.append('/home/root/A8/openwsn_last/coap')
 from   coap   import    coap,                    \
                         coapResource,            \
                         coapDefines as d,        \

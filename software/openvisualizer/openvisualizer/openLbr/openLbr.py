@@ -235,7 +235,7 @@ class OpenLbr(eventBusClient.eventBusClient):
 
                 if len(lowpan['route'])<2:
                     # no source route could be found
-                    log.error('no source route to {0}'.format(lowpan['dst_addr']))
+                    #print('no source route to {0}'.format(lowpan['dst_addr']))
                     # TODO: return ICMPv6 message
                     return
 
@@ -315,10 +315,10 @@ class OpenLbr(eventBusClient.eventBusClient):
                     #hop by hop header present, check hop_flags
                     if (ipv6dic['hop_flags'] & self.O_FLAG) == self.O_FLAG:
                         #error -- this packet has gone downstream somewhere.
-                        log.error("detected possible downstream link on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
+                        print("detected possible downstream link on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
                     if (ipv6dic['hop_flags'] & self.R_FLAG) == self.R_FLAG:
                         #error -- loop in the route
-                        log.error("detected possible loop on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
+                        print("detected possible loop on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
 
             if ipv6dic['next_header']==self.IANA_ICMPv6:
                 #icmp header
