@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Thu, 06 Apr 2017 10:45:44
+# on Fri, 08 Sep 2017 13:49:44
 #
 
 components = {
@@ -45,6 +45,7 @@ components = {
   38: "SECURITY",
   39: "USERIALBRIDGE",
   40: "REPORT",
+  41: "RANKING",
 }
 
 errorDescriptions = {
@@ -114,6 +115,13 @@ errorDescriptions = {
   74: "no entry available",
   75: "Neighbor {0}{1} added",
   76: "output buffer overflow in openserial (available space {0}, towrite {1})",
+  80: "Ranking array is empty",
+  81: "Parent not changed",
+  82: "No parent found",
+  83: "First parent index {0}",
+  84: "First parent index {0} second parent {1}",
+  85: "Array not empty",
+  86: "Parent changed",
 }
 
 sixtop_returncode = {

@@ -9,13 +9,13 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 import struct
-
+import os
 from pydispatch import dispatcher
 
 from ParserException import ParserException
 import Parser
+from openvisualizer.simpleDispatcher import data_dispatcher
 from openvisualizer.openType import  typeAddr,typeAsn
-import requests
 
 
 class ParserData(Parser.Parser):
@@ -64,16 +64,11 @@ class ParserData(Parser.Parser):
         
         #source and destination of the message
         dest = input[7:15]
-        dest_bytes = struct.unpack('<Q',''.join([chr(c) for c in dest]))
-        dest_address = typeAddr.typeAddr()
-        dest_address.update(2,dest_bytes[0],0)
+        
         
         
         #source is elided!!! so it is not there.. check that.
         source = input[15:23]
-        source_bytes = struct.unpack('<Q',''.join([chr(c) for c in source]))
-        source_address = typeAddr.typeAddr()
-        source_address.update(2,source_bytes[0],0)
         
 
         
@@ -93,39 +88,44 @@ class ParserData(Parser.Parser):
         #print input
         #print len(input)
 
-        if len(input) == 36 or len(input) == 37 :
-            if len(input) == 36:
-              asn_in_bytes = input[26:31]
-              asn_in_bytes = struct.unpack('<HHB',''.join([chr(c) for c in asn_in_bytes]))
-              asn_in = typeAsn.typeAsn()
-              asn_in.update(asn_in_bytes[0],asn_in_bytes[1],asn_in_bytes[2]) 
-              track = input[31]
-              seqnum_bytes = input[32:]
-              seqnum  = struct.unpack('>I',''.join([chr(c) for c in seqnum_bytes]))
+        if len(input) == 43:
+            asn_in_bytes = input[34:39]
+            asn_in_bytes = struct.unpack('<HHB',''.join([chr(c) for c in asn_in_bytes]))
+            asn_in = typeAsn.typeAsn()
+            asn_in.update(asn_in_bytes[0],asn_in_bytes[1],asn_in_bytes[2]) 
 
-            if len(input) == 37:
-              asn_in_bytes = input[27:32]
-              asn_in_bytes = struct.unpack('<HHB',''.join([chr(c) for c in asn_in_bytes]))
-              asn_in = typeAsn.typeAsn()
-              asn_in.update(asn_in_bytes[0],asn_in_bytes[1],asn_in_bytes[2]) 
-              track = input[32]
-              seqnum_bytes = input[33:]
-              seqnum  = struct.unpack('>I',''.join([chr(c) for c in seqnum_bytes]))
-          
-            
-            json = {}
-            json['dest_address'] = str(dest_address)
-            json['source'] = str(source_address)
-            json['asn'] = str(asn)
-            json['asn_in'] = str(asn_in)
-            json['track'] = str(track)
-            json['seqnum'] = str(seqnum[0])
-            experiment_id = 5
-            #print json
+            seqnum_bytes = input[39:]
+            seqnum  = struct.unpack('>I',''.join([chr(c) for c in seqnum_bytes]))
 
-            url = 'http://[2001:660:4701:f018:0:82ff:fe4f:3091]:5000/'
-            url = url + 'received'
-            requests.post(url,json=json)
+            sender = input[26:34]
+            source_address  = []
+            source_address += ['-'.join(["%.2x"%b for b in sender])]
+            source_address += [' ({0})'.format('64b')]
+            source_address = ''.join(source_address)
+
+            dispatcher = data_dispatcher.DataDispatcher("remote_web_server","received")
+            dispatcher.send(str(asn),str(asn_in),str(source_address),seqnum[0])
+
+        if len(input) == 44:
+            asn_in_bytes = input[35:40]
+            asn_in_bytes = struct.unpack('<HHB',''.join([chr(c) for c in asn_in_bytes]))
+            asn_in = typeAsn.typeAsn()
+            asn_in.update(asn_in_bytes[0],asn_in_bytes[1],asn_in_bytes[2]) 
+
+            seqnum_bytes = input[40:]
+            seqnum  = struct.unpack('>I',''.join([chr(c) for c in seqnum_bytes]))
+
+            sender = input[27:35]
+            source_address  = []
+            source_address += ['-'.join(["%.2x"%b for b in sender])]
+            source_address += [' ({0})'.format('64b')]
+            source_address = ''.join(source_address)            
+
+
+            dispatcher = data_dispatcher.DataDispatcher("remote_web_server","received")
+            dispatcher.send(str(asn),str(asn_in),str(source_address),seqnum[0])
+
+
 
         
         if log.isEnabledFor(logging.DEBUG):
@@ -138,40 +138,7 @@ class ParserData(Parser.Parser):
         # cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
         # then notify a latency component that will plot that information.
         # port 61001==0xee,0x49
-        if len(input) >37:
-           if input[36]==238 and input[37]==73:
-            # udp port 61001 for udplatency app.
-               aux      = input[len(input)-5:]               # last 5 bytes of the packet are the ASN in the UDP latency packet
-               diff     = self._asndiference(aux,asnbytes)   # calculate difference 
-               timeinus = diff*self.MSPERSLOT                # compute time in ms
-               SN       = input[len(input)-23:len(input)-21] # SN sent by mote
-               parent   = input[len(input)-21:len(input)-13] # the parent node is the first element (used to know topology)
-               node     = input[len(input)-13:len(input)-5]  # the node address
-               print timeinus
-               
-               if timeinus<0xFFFF:
-               # notify latency manager component. only if a valid value
-                  dispatcher.send(
-                     sender        = 'parserData',
-                     signal        = 'latency',
-                     data          = (node,timeinus,parent,SN),
-                  )
-               else:
-                   # this usually happens when the serial port framing is not correct and more than one message is parsed at the same time. this will be solved with HDLC framing.
-                   print "Wrong latency computation {0} = {1} mS".format(str(node),timeinus)
-                   print ",".join(hex(c) for c in input)
-                   log.warning("Wrong latency computation {0} = {1} mS".format(str(node),timeinus))
-                   pass
-               # in case we want to send the computed time to internet..
-               # computed=struct.pack('<H', timeinus)#to be appended to the pkt
-               # for x in computed:
-                   #input.append(x)
-           else:
-               # no udplatency
-               # print input
-               pass     
-        else:
-           pass      
+       
        
         eventType='data'
         # notify a tuple including source as one hop away nodes elide SRC address as can be inferred from MAC layer header

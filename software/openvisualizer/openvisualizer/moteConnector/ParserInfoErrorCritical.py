@@ -65,11 +65,11 @@ class ParserInfoErrorCritical(Parser.Parser):
         
         # log
         if   self.severity==self.SEVERITY_INFO:
-            log.info(output)
+            print(output)
         elif self.severity==self.SEVERITY_ERROR:
-            log.error(output)
+            print(output)
         elif self.severity==self.SEVERITY_CRITICAL:
-            log.critical(output)
+            print(output)
         else:
             raise SystemError("unexpected severity={0}".format(self.severity))
         

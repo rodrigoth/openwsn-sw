@@ -26,6 +26,7 @@ import OpenHdlc
 import openvisualizer.openvisualizer_utils as u
 from   openvisualizer.moteConnector import OpenParser
 from   openvisualizer.moteConnector.SerialTester import SerialTester
+from openvisualizer.simpleDispatcher import log_dispatcher
 
 #============================ functions =======================================
 
@@ -81,16 +82,21 @@ def findSerialPorts():
         for baudrate in [port[1], 500000]:
             probe = moteProbe(serialport=(port[0],baudrate))
             tester = SerialTester(probe.portname)
-            tester.setNumTestPkt(1)
-            tester.setTimeout(1)
+            tester.setNumTestPkt(5)
+            tester.setTimeout(2)
             tester.test(blocking=True)
             if tester.getStats()['numOk'] >= 1:
                 mote_ports.append((port[0],baudrate));
             probe.close()
             probe.join()
     
+    if not mote_ports:
+        dispatcher = log_dispatcher.LogDispatcher("remote_web_server","mote_probe_log")
+        dispatcher.send(os.uname()[1])
+
+
     # log
-    print("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
+    log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
     
     return mote_ports
 
@@ -190,8 +196,8 @@ class moteProbe(threading.Thread):
                 
                 if   self.mode==self.MODE_SERIAL:
                     self.serial = serial.Serial(self.serialport,self.baudrate,timeout=1)
-                    #self.serial.setDTR(0)
-                    #self.serial.setRTS(0)
+                    self.serial.setDTR(0)
+                    self.serial.setRTS(0)
                 elif self.mode==self.MODE_EMULATED:
                     self.serial = self.emulatedMote.bspUart
                 elif self.mode==self.MODE_IOTLAB:

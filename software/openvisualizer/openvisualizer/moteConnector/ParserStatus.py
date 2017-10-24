@@ -10,14 +10,17 @@ log.addHandler(logging.NullHandler())
 
 import collections
 import struct
+import os
 
 from ParserException import ParserException
 import Parser
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.openType import  typeAddr,typeAsn
 from datetime import datetime
-import requests
-import sqlite3
+from openvisualizer.simpleDispatcher import status_dispatcher,address_dispatcher
+import status_type
+from openvisualizer.openType import  typeAddr,typeAsn
+
 
 class FieldParsingKey(object):
 
@@ -217,7 +220,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     9,
                                     'NeighborsRow',
-                                    '<BBBBBBQQHbBBBBBHHBBB',
+                                    '<BBBBBBQQHbBBBBBHHBB',
                                     [
                                         'row',                       # B
                                         'used',                      # B
@@ -237,8 +240,7 @@ class ParserStatus(Parser.Parser):
                                         'asn_2_3',                   # H
                                         'asn_0_1',                   # H
                                         'joinPrio',                  # B
-                                        'f6PNORES',                   # B
-                                        'totalEBReceived',
+                                        'f6PNORES',                  # B
                                     ],
                                 )
         self._addFieldsParser   (   
@@ -252,59 +254,31 @@ class ParserStatus(Parser.Parser):
                                 )
         self._addFieldsParser   (
                                     3,
-                                    12,
-                                    'EB',
-                                    '<BQQBHHBB',
-                                    [
-                                        'addr_type',                 # B
-                                        'addr_bodyH',                # Q
-                                        'addr_bodyL',                # Q
-                                        'asn_4',                     # B
-                                        'asn_2_3',                   # H
-                                        'asn_0_1',                   # H
-                                        'channel',                   # B,
-                                        'iseb',                      # B
-                                    ],
-                                )
-        self._addFieldsParser  (
-                                    3,
                                     13,
-                                    'AckTx',
-                                    '<BQQBHHBBB',
+                                    'ParentSwitch',
+                                    '<BHHBQQ',
                                     [
-                                        'addr_type',                 # B
-                                        'addr_bodyH',                # Q
-                                        'addr_bodyL',                # Q
-                                        'asn_4',                     # B
-                                        'asn_2_3',                   # H
-                                        'asn_0_1',                   # H
-                                        'ack',                       # B
-                                        'tx',                        # B
-                                        'channel',
+                                        'parentswitchAsn_4',                     # B
+                                        'parentswitchAsn_2_3',                   # H
+                                        'parentswitchAsn_0_1',                   # H
+                                        'addr_type',                             # B
+                                        'addr_bodyH',                            # Q
+                                        'addr_bodyL',                            # Q
                                     ],
                                 )
-        self._addFieldsParser  (
+        self._addFieldsParser   (
                                     3,
                                     14,
-                                    'Uinject',
-                                    '<BQQBQQBHHBHHBB',
+                                    'Request6p',
+                                    '<BHHB',
                                     [
-                                        'addr_type',                 # B
-                                        'addr_bodyH',                # Q
-                                        'addr_bodyL',                # Q
-                                        'hop_type',                  # B
-                                        'hop_bodyH',                 # Q
-                                        'hop_bodyL',                 # Q
-                                        'asn_4',                     # B
-                                        'asn_2_3',                   # H
-                                        'asn_0_1',                   # H
-                                        'in_4',                      # B
-                                        'in_2_3',                    # H
-                                        'in_0_1',                    # H
-                                        'track',                     # B
-                                        'is_sent',                   # B
+                                        'Request6p_4',                     # B
+                                        'Request6p_2_3',                   # H
+                                        'Request6p_0_1',                   # H
+                                        'iana_code',                       # B
                                     ],
                                 )
+
        
     
     #======================== public ==========================================
@@ -357,72 +331,19 @@ class ParserStatus(Parser.Parser):
                 
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
-                experiment_id = 5
-                url = 'http://[2001:660:4701:f018:0:82ff:fe4f:3091]:5000/'
-                json = {}
-                if statusElem == 14:
-                    sender = typeAddr.typeAddr()
-                    sender.update(2,returnTuple[1],returnTuple[2])                    
-
-                    hop = typeAddr.typeAddr()
-                    hop.update(2,returnTuple[4],returnTuple[5])
-
-                    
-                    asn = typeAsn.typeAsn()
-                    asn.update(returnTuple[8],returnTuple[7],returnTuple[6]) 
-
-                    asn_in = typeAsn.typeAsn()
-                    asn_in.update(returnTuple[11],returnTuple[10],returnTuple[9])
-
-                    track = returnTuple[12]
-                    is_sent = returnTuple[13]
-
-                    json['asn'] = str(asn)
-                    json['sender'] = str(sender)
-                    json['hop'] = str(hop)
-                    json['asn_in'] = str(asn_in)
-                    json['track'] = track
-                    url = url + 'sent'
-                    requests.post(url,json=json)
+                if statusElem == status_type.StatusTypes.ParentSwitch or statusElem == status_type.StatusTypes.Request6p:
+                    if statusElem == status_type.StatusTypes.ParentSwitch :
+                        newParent = typeAddr.typeAddr()
+                        newParent.update(2,returnTuple[4],returnTuple[5]) 
+                        dispatcher = status_dispatcher.StatusDispatcher(statusElem,"remote_web_server","parent_switch")
+                        dispatcher.send(returnTuple,os.uname()[1],newParent)
+                
+                    if statusElem == status_type.StatusTypes.Request6p:
+                        dispatcher = status_dispatcher.StatusDispatcher(statusElem,"remote_web_server","request_6p")
+                        dispatcher.send(returnTuple,os.uname()[1],"")
+                   
 
 
-                    #print returnTuple
-                if statusElem == 13 or statusElem == 12:
-                    #print returnTuple                        
-                    node =  str(hex(moteId))[4:6] + str(hex(moteId))[2:4]
-                    #if node in ['9663']:
-                    sender = typeAddr.typeAddr()
-                    sender.update(2,returnTuple[1],returnTuple[2])
-                    asn = typeAsn.typeAsn()
-                    asn.update(returnTuple[5],returnTuple[4],returnTuple[3])    
-                    
-                    
-                    
-                    if(statusElem == 13):
-                        ack = returnTuple[6]
-                        tx = returnTuple[7]
-                        channel = returnTuple[8]
-                        json['asn'] = str(asn)
-                        json['node'] = node
-                        json['sender'] = str(sender)
-                        json['ack'] = ack
-                        json['tx'] = tx
-                        json['channel'] = channel
-                        url = url + 'pdr'
-
-                    else:
-                        channel = returnTuple[6]
-                        iseb =  returnTuple[7]
-                        json['asn'] = str(asn)
-                        json['node'] = node
-                        json['sender'] = str(sender)
-                        json['channel'] = channel
-                        json['iseb'] = iseb
-                        url = url + 'eb'
-                    
-                    requests.post(url,json=json)    
-                    
-                    
                 
                 # log
                 if log.isEnabledFor(logging.DEBUG):

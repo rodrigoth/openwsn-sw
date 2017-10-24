@@ -66,20 +66,20 @@ class UDPInject(eventBusClient.eventBusClient):
         
         Calculate latency values are in ms[SUPERFRAMELENGTH].
         '''
-        address    = ",".join(hex(c) for c in data[0])
-        asn        = struct.unpack('<HHB',''.join([chr(c) for c in data[1][:5]]))
-        counter    = struct.unpack('<H',''.join([chr(c) for c in data[1][5:]]))
+        #address    = ",".join(hex(c) for c in data[0])
+        #asn        = struct.unpack('<HHB',''.join([chr(c) for c in data[1][:5]]))
+        #counter    = struct.unpack('<H',''.join([chr(c) for c in data[1][5:]]))
 
-        stats = {}
+        #stats = {}
         
         # these fields are common
-        stats.update({'asn'    :asn})
-        stats.update({'counter':counter})
+        #stats.update({'asn'    :asn})
+        #stats.update({'counter':counter})
         
         # add to dictionary and compute stats...
-        self.stateLock.acquire()
-        self.contentStats.update({str(address):stats})
-        self.stateLock.release()
+        ##self.stateLock.acquire()
+        ##self.contentStats.update({str(address):stats})
+        #self.stateLock.release()
 
         # print self.contentStats
 
